@@ -1,3 +1,4 @@
+import { apiFetch } from './api'
 
 export type NewsCategory =
   | 'general'
@@ -41,7 +42,7 @@ export async function getTopHeadlines(
     params.set('q', q.trim())
   }
 
-  const response = await fetch(
+  const response = await apiFetch(
     `/api/v1/integrations/news?${params.toString()}`,
   )
 

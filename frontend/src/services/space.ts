@@ -1,3 +1,4 @@
+import { apiFetch } from './api'
 export interface ApodResponse {
   date: string
   title: string
@@ -19,7 +20,7 @@ export async function getApod(date?: string): Promise<ApodResponse> {
   const query = params.toString()
   const endpoint = `/api/v1/integrations/space/apod${query ? `?${query}` : ''}`
 
-  const response = await fetch(endpoint)
+  const response = await apiFetch(endpoint)
 
   if (!response.ok) {
     if (response.status === 429) {

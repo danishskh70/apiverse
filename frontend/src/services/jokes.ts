@@ -1,3 +1,4 @@
+import { apiFetch } from './api'
 export interface JokeResponse {
   error: boolean
   category: string
@@ -9,7 +10,7 @@ export interface JokeResponse {
 }
 
 export async function getRandomJoke(): Promise<JokeResponse> {
-  const response = await fetch('/api/v1/integrations/jokebox/random')
+  const response = await apiFetch('/api/v1/integrations/jokebox/random')
 
   if (!response.ok) {
     if (response.status === 429) {

@@ -1,3 +1,4 @@
+import { apiFetch } from './api'
 export interface WordDefinition {
   word: string
   phonetic: string
@@ -14,7 +15,7 @@ export interface WordDefinition {
 export async function getWordDefinition(
   word: string,
 ): Promise<WordDefinition> {
-  const response = await fetch(
+  const response = await apiFetch(
     `/api/v1/integrations/word/definition?word=${encodeURIComponent(word)}`,
   )
 

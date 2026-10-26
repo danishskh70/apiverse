@@ -1,3 +1,4 @@
+import { apiFetch } from './api'
 
 export interface WeatherData {
   latitude: number
@@ -17,7 +18,7 @@ export interface WeatherData {
 }
 
 export async function getCurrentWeather(): Promise<WeatherData> {
-  const response = await fetch(
+  const response = await apiFetch(
     '/api/v1/integrations/weather/current?latitude=18.5204&longitude=73.8567',
   )
 

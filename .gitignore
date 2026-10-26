@@ -1,0 +1,24 @@
+
+# Backup files
+*.bak
+*.bak.*
+*.pre-redesign-backup
+*.pre-integrations-backup
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Node
+node_modules/
+dist/
+
+# Local development
+.DS_Store

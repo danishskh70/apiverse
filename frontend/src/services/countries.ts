@@ -1,3 +1,4 @@
+import { apiFetch } from './api'
 
 export interface Country {
   name: {
@@ -15,7 +16,7 @@ export interface Country {
 }
 
 export async function getCountries(): Promise<Country[]> {
-  const response = await fetch('/api/v1/integrations/countries')
+  const response = await apiFetch('/api/v1/integrations/countries')
 
   if (!response.ok) {
     throw new Error('Unable to load countries')
