@@ -17,9 +17,9 @@ app = FastAPI(
     title="APIverse",
     description="Explore more. Understand better.",
     version="1.0.0",
-    docs_url=None,
-    redoc_url=None,
-    openapi_url=None,
+    # docs_url=None,
+    # redoc_url=None,
+    # openapi_url=None,
 )
 
 # CORS: read allowed frontend origins from the environment.
