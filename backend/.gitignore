@@ -1,0 +1,12 @@
+# Ignore all __pycache__ directories recursively
+**/__pycache__/
+
+# Ignore any loose compiled Python files
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore all __init__.py files recursively
+**/__init__.py
+
+.env

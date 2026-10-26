@@ -1,0 +1,28 @@
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Route, Routes } from 'react-router'
+import './index.css'
+import './App.css'
+import AppLayout from './components/layout/AppLayout'
+import OverviewPage from './pages/OverviewPage'
+import ModulePlaceholder from './pages/ModulePlaceholder'
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route index element={<OverviewPage />} />
+          <Route path="weather" element={<ModulePlaceholder />} />
+          <Route path="world" element={<ModulePlaceholder />} />
+          <Route path="news" element={<ModulePlaceholder />} />
+          <Route path="space" element={<ModulePlaceholder />} />
+          <Route path="jokes" element={<ModulePlaceholder />} />
+          <Route path="inspiration" element={<ModulePlaceholder />} />
+          <Route path="word" element={<ModulePlaceholder />} />
+          <Route path="history" element={<ModulePlaceholder />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  </StrictMode>,
+)
