@@ -9,12 +9,14 @@ from app.integrations.plugins.quotes.routes import router as quotes_router
 from app.integrations.plugins.word.routes import router as word_router
 from app.integrations.plugins.history.routes import router as history_router
 
-app=FastAPI(
+app = FastAPI(
     title="APIverse",
     description="Explore more. Understand better.",
     version="1.0.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
-
 
 @app.get("/")
 def root():
