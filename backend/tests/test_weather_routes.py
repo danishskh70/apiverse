@@ -1,13 +1,9 @@
-
 from unittest.mock import AsyncMock
 
 import httpx
-import pytest
 from fastapi.testclient import TestClient
 
-from app.integrations.plugins.weather.routes import router
 from app.main import app
-
 
 client = TestClient(app)
 
@@ -49,9 +45,7 @@ def test_current_weather_rejects_invalid_coordinates() -> None:
 
 
 def test_current_weather_provider_failure(monkeypatch) -> None:
-    mock_weather = AsyncMock(
-        side_effect=httpx.ConnectError("Connection failed")
-    )
+    mock_weather = AsyncMock(side_effect=httpx.ConnectError("Connection failed"))
     monkeypatch.setattr(
         "app.integrations.plugins.weather.routes.get_current_weather",
         mock_weather,

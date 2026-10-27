@@ -59,7 +59,7 @@ function App() {
   const [apodError, setApodError] = useState('')
   const [apodDate, setApodDate] = useState('')
   const [joke, setJoke] = useState<JokeResponse | null>(null)
-  const [jokeLoading, setJokeLoading] = useState(false)
+  const [jokeLoading, setJokeLoading] = useState(true)
   const [jokeError, setJokeError] = useState('')
   const [jokeRequest, setJokeRequest] = useState(0)
   const [dailyQuote, setDailyQuote] = useState<DailyQuote | null>(null)
@@ -109,8 +109,6 @@ function App() {
   useEffect(() => {
     let cancelled = false
 
-    setNewsLoading(true)
-    setNewsError('')
 
     getTopHeadlines(newsCategory)
       .then((data) => {
@@ -135,9 +133,6 @@ function App() {
   }, [newsCategory])
   useEffect(() => {
     let cancelled = false
-
-    setApodLoading(true)
-    setApodError('')
 
     getApod(apodDate || undefined)
       .then((data) => {
@@ -167,8 +162,6 @@ function App() {
   useEffect(() => {
     let cancelled = false
 
-    setJokeLoading(true)
-    setJokeError('')
 
     getRandomJoke()
       .then((data) => {
@@ -199,8 +192,6 @@ function App() {
   useEffect(() => {
     let cancelled = false
 
-    setQuoteLoading(true)
-    setQuoteError('')
 
     getDailyQuote()
       .then((data) => {
@@ -425,7 +416,7 @@ function App() {
             </article>
           ) : null}
         </section>
-                <section className="history-section">
+        <section className="history-section">
           <div className="section-heading">
             <div>
               <p className="eyebrow">EXPLORE THE PAST</p>
@@ -587,9 +578,11 @@ function App() {
             <select
               className="news-category-select"
               value={newsCategory}
-              onChange={(event) =>
+              onChange={(event) => {
+                setNewsLoading(true)
+                setNewsError('')
                 setNewsCategory(event.target.value as NewsCategory)
-              }
+              }}
               aria-label="Filter news by category"
             >
               <option value="general">Top headlines</option>
@@ -664,7 +657,11 @@ function App() {
               type="date"
               value={apodDate}
               max={new Date().toLocaleDateString('en-CA')}
-              onChange={(event) => setApodDate(event.target.value)}
+              onChange={(event) => {
+                setApodLoading(true)
+                setApodError('')
+                setApodDate(event.target.value)
+              }}
               aria-label="Choose astronomy picture date"
             />
           </div>
@@ -747,7 +744,11 @@ function App() {
             <button
               className="joke-refresh-button"
               type="button"
-              onClick={() => setJokeRequest((current) => current + 1)}
+              onClick={() => {
+  setJokeLoading(true)
+  setJokeError('')
+  setJokeRequest((current) => current + 1)
+}}
               disabled={jokeLoading}
             >
               {jokeLoading ? 'Loading...' : 'Another joke ↻'}

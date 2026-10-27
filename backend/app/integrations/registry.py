@@ -1,4 +1,3 @@
-
 from importlib import import_module
 from pkgutil import iter_modules
 
@@ -17,21 +16,15 @@ def discover_integrations() -> list[IntegrationManifest]:
         if not module_info.ispkg:
             continue
 
-        plugin_module = import_module(
-            f"{module_info.name}.plugin"
-        )
+        plugin_module = import_module(f"{module_info.name}.plugin")
 
         manifest = getattr(plugin_module, "manifest", None)
 
         if not isinstance(manifest, IntegrationManifest):
-            raise RuntimeError(
-                f"Plugin '{module_info.name}' has no valid manifest."
-            )
+            raise RuntimeError(f"Plugin '{module_info.name}' has no valid manifest.")
 
         if manifest.slug in seen_slugs:
-            raise RuntimeError(
-                f"Duplicate integration slug: '{manifest.slug}'."
-            )
+            raise RuntimeError(f"Duplicate integration slug: '{manifest.slug}'.")
 
         seen_slugs.add(manifest.slug)
 

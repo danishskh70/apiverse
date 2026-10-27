@@ -1,9 +1,20 @@
-
 from fastapi.testclient import TestClient
 
 from app.main import app
 
 client = TestClient(app)
+
+EXPECTED_PLUGINS = {
+    "quotes",
+    "github",
+    "jokebox",
+    "news",
+    "space",
+    "history",
+    "weather",
+    "word",
+    "world-explorer",
+}
 
 
 def test_list_integrations() -> None:
@@ -12,8 +23,8 @@ def test_list_integrations() -> None:
     assert response.status_code == 200
 
     integrations = response.json()
-    assert len(integrations) == 6
-    assert any(item["slug"] == "weather" for item in integrations)
+    assert {item["slug"] for item in integrations} == EXPECTED_PLUGINS
+    assert len(integrations) == len(EXPECTED_PLUGINS)
 
 
 def test_get_weather_integration() -> None:

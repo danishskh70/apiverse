@@ -1,9 +1,7 @@
-
-from fastapi import APIRouter, HTTPException, Query, status
 import httpx
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.integrations.plugins.weather.service import get_current_weather
-
 
 router = APIRouter(
     prefix="/api/v1/integrations/weather",

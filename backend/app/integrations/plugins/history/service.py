@@ -1,13 +1,13 @@
-
 import logging
 from datetime import date
+from urllib.parse import quote
 
 import httpx
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
 
-WIKIPEDIA_URL = "https://en.wikipedia.org/api/rest_v1/feed/onthisday/events"
+WIKIMEDIA_URL = "https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/events"
 REQUEST_TIMEOUT = 10.0
 
 
@@ -20,7 +20,6 @@ async def get_historical_events(
     month = month or today.month
     day = day or today.day
 
-    # Validate the date before contacting the upstream API.
     try:
         date(2000, month, day)
     except ValueError as exc:
@@ -33,18 +32,18 @@ async def get_historical_events(
         async with httpx.AsyncClient(
             timeout=REQUEST_TIMEOUT,
             headers={
-                "User-Agent": "APIverse/1.0 (historical events explorer)"
+                "User-Agent": "APIverse/1.0 (historical events explorer)",
+                "Api-User-Agent": "APIverse/1.0 (historical events explorer)",
+                "Accept": "application/json",
             },
         ) as client:
-            response = await client.get(f"{WIKIPEDIA_URL}/{month}/{day}")
-
+            response = await client.get(f"{WIKIMEDIA_URL}/{month:02d}/{day:02d}")
             if response.is_error:
                 logger.warning(
-                    "Wikipedia history upstream error: status=%s body=%s",
+                    "Wikimedia history upstream error: status=%s body=%s",
                     response.status_code,
                     response.text[:300],
                 )
-
             response.raise_for_status()
             data = response.json()
 
@@ -53,20 +52,18 @@ async def get_historical_events(
             status_code=502,
             detail="The history service returned an unsuccessful response.",
         ) from exc
-
     except httpx.RequestError as exc:
         logger.warning(
-            "Wikipedia history connection failure: error_type=%s",
+            "Wikimedia history connection failure: error_type=%s",
             type(exc).__name__,
         )
         raise HTTPException(
             status_code=502,
             detail="Unable to connect to the history service right now.",
         ) from exc
-
     except ValueError as exc:
         logger.warning(
-            "Wikipedia history returned invalid JSON: error_type=%s",
+            "Wikimedia history returned invalid JSON: error_type=%s",
             type(exc).__name__,
         )
         raise HTTPException(
@@ -75,9 +72,8 @@ async def get_historical_events(
         ) from exc
 
     events = data.get("events") if isinstance(data, dict) else None
-
     if not isinstance(events, list):
-        logger.warning("Wikipedia history returned an unexpected response structure.")
+        logger.warning("Wikimedia history returned an unexpected response structure.")
         raise HTTPException(
             status_code=502,
             detail="The history service returned invalid data.",
@@ -85,26 +81,43 @@ async def get_historical_events(
 
     results = []
 
-    for event in events[:12]:
-        if not isinstance(event, dict) or not event.get("text"):
+    for event in events:
+        if not isinstance(event, dict) or not isinstance(event.get("text"), str):
             continue
+
+        pages = []
+        event_pages = event.get("pages", [])
+
+        if isinstance(event_pages, list):
+            for page in event_pages:
+                if not isinstance(page, dict):
+                    continue
+
+                title = page.get("title")
+                if not isinstance(title, str) or not title:
+                    continue
+
+                canonical = page.get("titles", {}).get("canonical", title)
+                if not isinstance(canonical, str) or not canonical:
+                    canonical = title
+
+                pages.append(
+                    {
+                        "title": title.replace("_", " "),
+                        "url": f"https://en.wikipedia.org/wiki/{quote(canonical.replace(' ', '_'), safe='()_')}",
+                    }
+                )
 
         results.append(
             {
                 "year": event.get("year"),
                 "title": event["text"],
-                "pages": [
-                    {
-                        "title": page.get("title"),
-                        "url": page.get("content_urls", {})
-                        .get("desktop", {})
-                        .get("page"),
-                    }
-                    for page in event.get("pages", [])
-                    if isinstance(page, dict) and page.get("title")
-                ],
+                "pages": pages,
             }
         )
+
+        if len(results) == 12:
+            break
 
     return {
         "date": f"{month:02d}-{day:02d}",

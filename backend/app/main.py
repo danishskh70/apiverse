@@ -1,17 +1,19 @@
 import os
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 load_dotenv()
 from app.api.integrations import router as integrations_router
-from app.integrations.plugins.weather.routes import router as weather_router
 from app.integrations.plugins.countries.routes import router as countries_router
-from app.integrations.plugins.news.routes import router as news_router
-from app.integrations.plugins.space.routes import router as space_router
-from app.integrations.plugins.jokes.routes import router as jokes_router
-from app.integrations.plugins.quotes.routes import router as quotes_router
-from app.integrations.plugins.word.routes import router as word_router
 from app.integrations.plugins.history.routes import router as history_router
+from app.integrations.plugins.jokes.routes import router as jokes_router
+from app.integrations.plugins.news.routes import router as news_router
+from app.integrations.plugins.quotes.routes import router as quotes_router
+from app.integrations.plugins.space.routes import router as space_router
+from app.integrations.plugins.weather.routes import router as weather_router
+from app.integrations.plugins.word.routes import router as word_router
 
 app = FastAPI(
     title="APIverse",
@@ -29,9 +31,7 @@ _raw_origins = os.getenv(
 )
 
 allowed_origins = [
-    origin.strip().rstrip("/")
-    for origin in _raw_origins.split(",")
-    if origin.strip()
+    origin.strip().rstrip("/") for origin in _raw_origins.split(",") if origin.strip()
 ]
 
 app.add_middleware(
@@ -42,16 +42,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def root():
     return {"root"}
 
-@app.get("/health",tags=["Health"])
+
+@app.get("/health", tags=["Health"])
 def health():
     return {
-       "status":"ok",
-       "service":"apiverse",
+        "status": "ok",
+        "service": "apiverse",
     }
+
 
 app.include_router(countries_router)
 app.include_router(weather_router)

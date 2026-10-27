@@ -1,4 +1,3 @@
-
 from types import SimpleNamespace
 
 import pytest
@@ -6,19 +5,24 @@ import pytest
 from app.integrations import registry
 from app.schemas.integration import IntegrationManifest
 
+EXPECTED_PLUGINS = {
+    "quotes",
+    "github",
+    "jokebox",
+    "news",
+    "space",
+    "history",
+    "weather",
+    "word",
+    "world-explorer",
+}
 
-def test_discovers_all_six_plugins() -> None:
+
+def test_discovers_all_nine_plugins() -> None:
     integrations = registry.discover_integrations()
 
-    assert len(integrations) == 6
-    assert {item.slug for item in integrations} == {
-        "weather",
-        "world-explorer",
-        "news",
-        "space",
-        "jokebox",
-        "github",
-    }
+    assert {item.slug for item in integrations} == EXPECTED_PLUGINS
+    assert len(integrations) == len(EXPECTED_PLUGINS)
 
 
 def test_plugin_slugs_are_unique() -> None:

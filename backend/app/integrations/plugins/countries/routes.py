@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter
 
 from app.integrations.plugins.countries.service import get_countries

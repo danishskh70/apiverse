@@ -1,4 +1,3 @@
-
 from app.schemas.integration import IntegrationManifest
 
 manifest = IntegrationManifest(
@@ -10,4 +9,3 @@ manifest = IntegrationManifest(
     requires_api_key=True,
     tags=["news", "headlines"],
 )
-    

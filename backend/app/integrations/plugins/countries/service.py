@@ -1,4 +1,3 @@
-
 import os
 
 import httpx
@@ -53,24 +52,26 @@ async def get_countries() -> list[dict]:
                     flag = item.get("flag") or {}
                     codes = item.get("codes") or {}
 
-                    countries.append({
-                        "name": {
-                            "common": names.get("common", "Unknown"),
-                            "official": names.get("official", "Unknown"),
-                        },
-                        "flags": {
-                            "png": flag.get("url_png", ""),
-                            "alt": flag.get("description", ""),
-                        },
-                        "capital": [
-                            capital["name"]
-                            for capital in capitals
-                            if capital.get("name")
-                        ],
-                        "region": item.get("region") or "Unknown",
-                        "population": item.get("population") or 0,
-                        "cca3": codes.get("alpha_3", ""),
-                    })
+                    countries.append(
+                        {
+                            "name": {
+                                "common": names.get("common", "Unknown"),
+                                "official": names.get("official", "Unknown"),
+                            },
+                            "flags": {
+                                "png": flag.get("url_png", ""),
+                                "alt": flag.get("description", ""),
+                            },
+                            "capital": [
+                                capital["name"]
+                                for capital in capitals
+                                if capital.get("name")
+                            ],
+                            "region": item.get("region") or "Unknown",
+                            "population": item.get("population") or 0,
+                            "cca3": codes.get("alpha_3", ""),
+                        }
+                    )
 
                 meta = data.get("meta", {})
 

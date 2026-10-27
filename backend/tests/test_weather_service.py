@@ -1,4 +1,3 @@
-
 import httpx
 import pytest
 
@@ -50,9 +49,9 @@ async def test_get_current_weather_success(monkeypatch) -> None:
     result = await get_current_weather(18.52, 73.86)
 
     assert result == {
-    **expected_data,
-    "condition": "Mainly clear",
-}
+        **expected_data,
+        "condition": "Mainly clear",
+    }
 
 
 @pytest.mark.asyncio
@@ -111,7 +110,7 @@ async def test_get_current_weather_invalid_response(monkeypatch) -> None:
         MockClient,
     )
 
-    with pytest.raises(ValueError, match="Invalid weather data"):
+    with pytest.raises(TypeError, match="Invalid weather data"):
         await get_current_weather(18.52, 73.86)
 
 

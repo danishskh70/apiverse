@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Annotated
 
 from fastapi import APIRouter, Query
 
@@ -12,7 +13,7 @@ router = APIRouter(
 
 @router.get("/space/apod")
 async def astronomy_picture_of_the_day(
-    apod_date: date | None = Query(default=None, alias="date"),
+    apod_date: Annotated[date | None, Query(alias="date")] = None,
 ) -> dict:
     """Return NASA's Astronomy Picture of the Day."""
     return await get_apod(

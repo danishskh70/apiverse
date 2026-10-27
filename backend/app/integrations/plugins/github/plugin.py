@@ -1,4 +1,3 @@
-
 from app.schemas.integration import IntegrationManifest
 
 manifest = IntegrationManifest(

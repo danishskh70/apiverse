@@ -1,4 +1,3 @@
-
 import logging
 
 import httpx
@@ -6,15 +5,17 @@ from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
 
-DICTIONARY_URL = "https://api.dictionaryapi.dev/api/v2/entries/en"
+DICTIONARY_URL = "https://api.suvankar.cc/dictionaryapi/v1/definitions/en"
 REQUEST_TIMEOUT = 10.0
 
 
 async def get_word_definition(word: str) -> dict:
-    """Fetch definitions and examples for a word."""
+    """Fetch dictionary definitions and examples from Wiktionary."""
+    url = f"{DICTIONARY_URL}/{word}"
+
     try:
         async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
-            response = await client.get(f"{DICTIONARY_URL}/{word}")
+            response = await client.get(url, params={"compact": "true"})
 
             if response.is_error:
                 logger.warning(
@@ -27,12 +28,6 @@ async def get_word_definition(word: str) -> dict:
             data = response.json()
 
     except httpx.HTTPStatusError as exc:
-        if exc.response.status_code == 404:
-            raise HTTPException(
-                status_code=404,
-                detail="No dictionary entry was found for this word.",
-            ) from exc
-
         raise HTTPException(
             status_code=502,
             detail="The dictionary service returned an unsuccessful response.",
@@ -49,41 +44,46 @@ async def get_word_definition(word: str) -> dict:
         ) from exc
 
     except ValueError as exc:
-        logger.warning(
-            "Dictionary returned invalid JSON: error_type=%s",
-            type(exc).__name__,
-        )
         raise HTTPException(
             status_code=502,
             detail="The dictionary service returned invalid data.",
         ) from exc
 
-    if not isinstance(data, list) or not data or not isinstance(data[0], dict):
-        logger.warning("Dictionary returned an unexpected response structure.")
+    if not isinstance(data, dict) or not isinstance(data.get("meanings"), list):
         raise HTTPException(
             status_code=502,
             detail="The dictionary service returned invalid data.",
         )
 
-    entry = data[0]
     meanings = []
 
-    for meaning in entry.get("meanings", []):
+    for meaning in data["meanings"]:
         if not isinstance(meaning, dict):
             continue
 
         definitions = []
 
-        for item in meaning.get("definitions", []):
-            if not isinstance(item, dict) or not item.get("definition"):
+        for sense in meaning.get("senses", []):
+            if not isinstance(sense, dict):
                 continue
 
-            definition = {"definition": item["definition"]}
+            glosses = sense.get("glosses", [])
+            if not isinstance(glosses, list):
+                continue
 
-            if item.get("example"):
-                definition["example"] = item["example"]
+            for gloss in glosses:
+                if not isinstance(gloss, str) or not gloss.strip():
+                    continue
 
-            definitions.append(definition)
+                definition = {"definition": gloss}
+
+                examples = sense.get("examples", [])
+                if isinstance(examples, list) and examples:
+                    example = examples[0]
+                    if isinstance(example, str) and example.strip():
+                        definition["example"] = example
+
+                definitions.append(definition)
 
         if definitions:
             meanings.append(
@@ -93,22 +93,16 @@ async def get_word_definition(word: str) -> dict:
                 }
             )
 
-    if not entry.get("word") or not meanings:
-        logger.warning("Dictionary response contained no usable definitions.")
+    result_word = data.get("word")
+    if not isinstance(result_word, str) or not result_word or not meanings:
         raise HTTPException(
             status_code=502,
             detail="No usable definitions were returned.",
         )
 
-    phonetics = [
-        item.get("text")
-        for item in entry.get("phonetics", [])
-        if isinstance(item, dict) and item.get("text")
-    ]
-
     return {
-        "word": entry["word"],
-        "phonetic": phonetics[0] if phonetics else "",
+        "word": result_word,
+        "phonetic": "",
         "meanings": meanings,
-        "source": "Free Dictionary API",
+        "source": "Wiktionary (CC BY-SA 4.0)",
     }

@@ -1,6 +1,4 @@
-
 import httpx
-
 
 WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast"
 REQUEST_TIMEOUT = 10.0
@@ -59,13 +57,13 @@ async def get_current_weather(
         data = response.json()
 
     if not isinstance(data, dict) or not isinstance(data.get("current"), dict):
-        raise ValueError("Invalid weather data received from Open-Meteo.")
+        raise TypeError("Invalid weather data received from Open-Meteo.")
 
     current = data["current"]
     weather_code = current.get("weather_code")
 
     if not isinstance(weather_code, int):
-        raise ValueError("Invalid weather code received from Open-Meteo.")
+        raise TypeError("Invalid weather code received from Open-Meteo.")
 
     return {
         "latitude": data.get("latitude"),

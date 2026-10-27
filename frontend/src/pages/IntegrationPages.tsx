@@ -44,6 +44,7 @@ import {
   getHistoricalEvents,
   type HistoryResponse,
 } from '../services/history'
+import DOMPurify from 'dompurify'
 
 function PageHeading({
   eyebrow,
@@ -135,8 +136,29 @@ export function WeatherPage() {
   }
 
   useEffect(() => {
-    void loadWeather()
-  }, [])
+  let cancelled = false
+
+  async function fetchWeather() {
+    try {
+      const result = await getCurrentWeather()
+      if (!cancelled) setData(result)
+    } catch (err) {
+      if (!cancelled) {
+        setError(
+          err instanceof Error ? err.message : 'Could not load weather.',
+        )
+      }
+    } finally {
+      if (!cancelled) setLoading(false)
+    }
+  }
+
+  void fetchWeather()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
 
   return (
     <section className="module-page">
@@ -219,8 +241,29 @@ export function WorldPage() {
   }
 
   useEffect(() => {
-    void loadCountries()
-  }, [])
+  let cancelled = false
+
+  async function fetchCountries() {
+    try {
+      const result = await getCountries()
+      if (!cancelled) setCountries(result)
+    } catch (err) {
+      if (!cancelled) {
+        setError(
+          err instanceof Error ? err.message : 'Could not load countries.',
+        )
+      }
+    } finally {
+      if (!cancelled) setLoading(false)
+    }
+  }
+
+  void fetchCountries()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
 
   const query = search.trim().toLowerCase()
   const filtered = countries.filter((country) => {
@@ -266,12 +309,12 @@ export function WorldPage() {
             <article className="module-card country-card" key={country.cca3}>
               <div className="country-card-top">
                 {country.flags?.png ? (
-      <img
-        src={country.flags.png}
-        alt=""
-        loading="lazy"
-      />
-    ) : null}
+                  <img
+                    src={country.flags.png}
+                    alt=""
+                    loading="lazy"
+                  />
+                ) : null}
                 <span className="country-code">{country.cca3}</span>
               </div>
               <h2>{country.name.common}</h2>
@@ -330,8 +373,29 @@ export function NewsPage() {
   }
 
   useEffect(() => {
-    void loadNews('general', '')
-  }, [])
+  let cancelled = false
+
+  async function fetchNews() {
+    try {
+      const result = await getTopHeadlines('general')
+      if (!cancelled) setArticles(result.articles)
+    } catch (err) {
+      if (!cancelled) {
+        setError(
+          err instanceof Error ? err.message : 'Could not load news.',
+        )
+      }
+    } finally {
+      if (!cancelled) setLoading(false)
+    }
+  }
+
+  void fetchNews()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
 
   function chooseCategory(nextCategory: NewsCategory) {
     setCategory(nextCategory)
@@ -445,8 +509,31 @@ export function SpacePage() {
   }
 
   useEffect(() => {
-    void loadApod('')
-  }, [])
+  let cancelled = false
+
+  async function fetchApod() {
+    try {
+      const result = await getApod()
+      if (!cancelled) setData(result)
+    } catch (err) {
+      if (!cancelled) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Could not load astronomy data.',
+        )
+      }
+    } finally {
+      if (!cancelled) setLoading(false)
+    }
+  }
+
+  void fetchApod()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
 
   return (
     <section className="module-page">
@@ -494,8 +581,23 @@ export function SpacePage() {
           <div className="apod-copy">
             <p className="module-eyebrow">{formatDate(data.date)}</p>
             <h2>{data.title}</h2>
-            {data.copyright ? <p className="apod-copyright">Image credit: {data.copyright}</p> : null}
-            <p className="apod-explanation">{data.explanation}</p>
+            {data.copyright ? (
+              <p className="apod-copyright">
+                Image credit:{' '}
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(data.copyright),
+                  }}
+                />
+              </p>
+            ) : null}
+
+            <div
+              className="apod-explanation"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(data.explanation),
+              }}
+            />
             {data.url ? (
               <a className="text-link" href={data.hdurl || data.url} target="_blank" rel="noreferrer">
                 Open full resolution <ExternalLink size={15} />
@@ -512,8 +614,19 @@ export function SpacePage() {
                 allowFullScreen
               />
             ) : (
-              <a href={data.hdurl || data.url} target="_blank" rel="noreferrer">
-                <img src={data.url} alt={data.title} />
+              <a
+                href={data.hdurl || data.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <img
+                  src={data.hdurl || data.url}
+                  alt={data.title}
+                  loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none'
+                  }}
+                />
               </a>
             )}
           </div>
@@ -525,7 +638,7 @@ export function SpacePage() {
 
 export function JokesPage() {
   const [joke, setJoke] = useState<JokeResponse | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   async function loadJoke() {
@@ -541,9 +654,29 @@ export function JokesPage() {
   }
 
   useEffect(() => {
-    void loadJoke()
-  }, [])
+  let cancelled = false
 
+  async function fetchJoke() {
+    try {
+      const result = await getRandomJoke()
+      if (!cancelled) setJoke(result)
+    } catch (err) {
+      if (!cancelled) {
+        setError(
+          err instanceof Error ? err.message : 'Could not load a joke.',
+        )
+      }
+    } finally {
+      if (!cancelled) setLoading(false)
+    }
+  }
+
+  void fetchJoke()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
   return (
     <section className="module-page">
       <PageHeading
@@ -596,9 +729,29 @@ export function InspirationPage() {
   }
 
   useEffect(() => {
-    void loadQuote()
-  }, [])
+  let cancelled = false
 
+  async function fetchQuote() {
+    try {
+      const result = await getDailyQuote()
+      if (!cancelled) setQuote(result)
+    } catch (err) {
+      if (!cancelled) {
+        setError(
+          err instanceof Error ? err.message : 'Could not load the quote.',
+        )
+      }
+    } finally {
+      if (!cancelled) setLoading(false)
+    }
+  }
+
+  void fetchQuote()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
   return (
     <section className="module-page">
       <PageHeading
@@ -650,9 +803,31 @@ export function WordPage() {
   }
 
   useEffect(() => {
-    void loadWord('serendipity')
-  }, [])
+  let cancelled = false
 
+  async function fetchWord() {
+    try {
+      const result = await getWordDefinition('serendipity')
+      if (!cancelled) setWord(result)
+    } catch (err) {
+      if (!cancelled) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Could not load the definition.',
+        )
+      }
+    } finally {
+      if (!cancelled) setLoading(false)
+    }
+  }
+
+  void fetchWord()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
   return (
     <section className="module-page">
       <PageHeading
@@ -731,8 +906,31 @@ export function HistoryPage() {
   }
 
   useEffect(() => {
-    void loadHistory()
-  }, [])
+  let cancelled = false
+
+  async function fetchHistory() {
+    try {
+      const result = await getHistoricalEvents()
+      if (!cancelled) setData(result)
+    } catch (err) {
+      if (!cancelled) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Could not load historical events.',
+        )
+      }
+    } finally {
+      if (!cancelled) setLoading(false)
+    }
+  }
+
+  void fetchHistory()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
 
   return (
     <section className="module-page">

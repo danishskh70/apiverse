@@ -1,93 +1,93 @@
-
-import logging
 import os
+from datetime import date as date_class
 
 import httpx
-from dotenv import load_dotenv
 from fastapi import HTTPException
 
-logger = logging.getLogger(__name__)
-
-load_dotenv()
-
-NASA_APOD_URL = "https://api.nasa.gov/planetary/apod"
+NASA_APOD_URL = "https://science.nasa.gov/wp-json/wp/v2/apod-basic"
 REQUEST_TIMEOUT = 30.0
 
 
 async def get_apod(date: str | None = None) -> dict:
-    """Fetch NASA's Astronomy Picture of the Day."""
-    api_key = os.getenv("NASA_API_KEY")
+    params = {"api_key": os.getenv("NASA_API_KEY", "DEMO_KEY")}
 
-    if not api_key:
-        logger.error("NASA APOD unavailable: NASA_API_KEY is not configured.")
-        raise HTTPException(
-            status_code=500,
-            detail="NASA_API_KEY is not configured.",
-        )
-
-    params = {"api_key": api_key}
     if date:
         params["date"] = date
 
     try:
         async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
             response = await client.get(NASA_APOD_URL, params=params)
-
-            if response.is_error:
-                logger.warning(
-                    "NASA APOD upstream error: status=%s body=%s",
-                    response.status_code,
-                    response.text[:300],
-                )
-
             response.raise_for_status()
             data = response.json()
 
     except httpx.HTTPStatusError as exc:
-        upstream_status = exc.response.status_code
-
-        if upstream_status == 429:
+        if exc.response.status_code == 429:
             raise HTTPException(
                 status_code=429,
                 detail="NASA API rate limit reached. Try again later.",
             ) from exc
 
-        if upstream_status == 400:
-            raise HTTPException(
-                status_code=400,
-                detail="NASA rejected the requested date or parameters.",
-            ) from exc
-
         raise HTTPException(
             status_code=502,
-            detail="NASA could not process the request.",
+            detail="NASA could not process the APOD request.",
         ) from exc
 
-    except httpx.RequestError as exc:
-        logger.warning(
-            "NASA APOD connection failure: error_type=%s",
-            type(exc).__name__,
-        )
+    except (httpx.HTTPError, ValueError) as exc:
         raise HTTPException(
             status_code=502,
-            detail="Unable to connect to NASA right now.",
+            detail="Unable to retrieve astronomy data right now.",
         ) from exc
 
-    except ValueError as exc:
-        logger.warning(
-            "NASA APOD returned invalid JSON: error_type=%s",
-            type(exc).__name__,
-        )
-        raise HTTPException(
-            status_code=502,
-            detail="NASA returned an invalid response.",
-        ) from exc
-
-    if not isinstance(data, dict) or not data.get("url") or not data.get("title"):
-        logger.warning("NASA APOD returned an unexpected response structure.")
+    # NASA's new endpoint returns a list of APOD entries.
+    if isinstance(data, dict):
+        entries = [data]
+    elif isinstance(data, list):
+        entries = data
+    else:
         raise HTTPException(
             status_code=502,
             detail="NASA returned an invalid APOD response.",
         )
 
-    return data
+    requested_date = date or date_class.today().isoformat()
+
+    entry = next(
+        (
+            item
+            for item in entries
+            if isinstance(item, dict) and item.get("date") == requested_date
+        ),
+        None,
+    )
+
+    if entry is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No APOD entry found for {requested_date}.",
+        )
+
+    title = entry.get("title")
+    media_type = entry.get("media_type")
+    image_url = entry.get("hdurl") or entry.get("url")
+
+    if (
+        not title
+        or not image_url
+        or not image_url.startswith("https://")
+        or not media_type
+    ):
+        raise HTTPException(
+            status_code=502,
+            detail="NASA returned incomplete APOD data.",
+        )
+
+    # Preserve the response shape expected by the existing frontend.
+    return {
+        **entry,
+        "date": entry.get("date", requested_date),
+        "title": title,
+        "url": entry.get("url") or image_url,
+        "hdurl": entry.get("hdurl") or image_url,
+        "media_type": media_type,
+        "explanation": entry.get("explanation", ""),
+    }
